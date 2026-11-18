@@ -1,13 +1,13 @@
--- MySQL dump 10.13  Distrib 8.4.11, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.43, for Linux (x86_64)
 --
--- Host: localhost    Database: testing_system
+-- Host: localhost    Database: lamp
 -- ------------------------------------------------------
--- Server version	8.4.11-0ubuntu0.26.04.1
+-- Server version	5.7.43
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
+/*!40101 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -21,10 +21,10 @@
 
 DROP TABLE IF EXISTS `admin_check`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `admin_check` (
-  `id` int NOT NULL,
-  `info` varchar(50) DEFAULT NULL,
+  `id` int(11) NOT NULL,
+  `info` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -45,11 +45,11 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `answer_options`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `answer_options` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `question_id` int NOT NULL,
-  `option_text` text NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `question_id` int(11) NOT NULL,
+  `option_text` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `is_correct` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `question_id` (`question_id`),
@@ -73,11 +73,11 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `attempts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `attempts` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `student_id` int NOT NULL,
-  `test_id` int NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `student_id` int(11) NOT NULL,
+  `test_id` int(11) NOT NULL,
   `score` decimal(5,2) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `student_id` (`student_id`),
@@ -103,12 +103,12 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `questions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `questions` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `test_id` int NOT NULL,
-  `question_text` text NOT NULL,
-  `question_type` enum('single_choice','multiple_choice','text_input') NOT NULL DEFAULT 'single_choice',
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `test_id` int(11) NOT NULL,
+  `question_text` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `question_type` enum('single_choice','multiple_choice','text_input') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'single_choice',
   PRIMARY KEY (`id`),
   KEY `test_id` (`test_id`),
   CONSTRAINT `questions_ibfk_1` FOREIGN KEY (`test_id`) REFERENCES `tests` (`id`)
@@ -131,10 +131,10 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `roles`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `roles` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(50) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -156,13 +156,13 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `student_answers`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `student_answers` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `attempt_id` int NOT NULL,
-  `question_id` int NOT NULL,
-  `selected_option_id` int DEFAULT NULL,
-  `typed_answer` text,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `attempt_id` int(11) NOT NULL,
+  `question_id` int(11) NOT NULL,
+  `selected_option_id` int(11) DEFAULT NULL,
+  `typed_answer` text COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`id`),
   KEY `attempt_id` (`attempt_id`),
   KEY `question_id` (`question_id`),
@@ -189,11 +189,11 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `tests`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tests` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(200) NOT NULL,
-  `teacher_id` int NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `title` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `teacher_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `teacher_id` (`teacher_id`),
   CONSTRAINT `tests_ibfk_1` FOREIGN KEY (`teacher_id`) REFERENCES `users` (`id`)
@@ -216,12 +216,12 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `users` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `login` varchar(50) NOT NULL,
-  `password_hash` varchar(255) NOT NULL,
-  `role_id` int NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `login` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`),
   KEY `role_id` (`role_id`),
@@ -235,7 +235,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'ivanov_teacher','hash',1),(2,'petrov_student','hash',2),(23,'student_1','hash1',2),(24,'student_2','hash2',2),(25,'student_3','hash3',2),(30,'student_6','hash8',2),(31,'student_7','hash9',2),(32,'student_8','hash10',2);
+INSERT INTO `users` VALUES (1,'ivanov_teacher','$2y$10$c8WWjP39Xt8cbYq/TeWKnO7VE9RFdRVUtubqHdOZKw44jCagSae3e',1),(2,'petrov_student','$2y$10$c8WWjP39Xt8cbYq/TeWKnO7VE9RFdRVUtubqHdOZKw44jCagSae3e',2),(23,'student_1','$2y$10$c8WWjP39Xt8cbYq/TeWKnO7VE9RFdRVUtubqHdOZKw44jCagSae3e',2),(24,'student_2','$2y$10$c8WWjP39Xt8cbYq/TeWKnO7VE9RFdRVUtubqHdOZKw44jCagSae3e',2),(25,'student_3','$2y$10$c8WWjP39Xt8cbYq/TeWKnO7VE9RFdRVUtubqHdOZKw44jCagSae3e',2),(30,'student_6','$2y$10$c8WWjP39Xt8cbYq/TeWKnO7VE9RFdRVUtubqHdOZKw44jCagSae3e',2),(31,'student_7','$2y$10$c8WWjP39Xt8cbYq/TeWKnO7VE9RFdRVUtubqHdOZKw44jCagSae3e',2),(32,'student_8','$2y$10$c8WWjP39Xt8cbYq/TeWKnO7VE9RFdRVUtubqHdOZKw44jCagSae3e',2);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -281,13 +281,13 @@ DELIMITER ;
 
 DROP TABLE IF EXISTS `users_log`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `users_log` (
-  `log_id` int NOT NULL AUTO_INCREMENT,
-  `action` varchar(10) DEFAULT NULL,
-  `user_id` int DEFAULT NULL,
+  `log_id` int(11) NOT NULL AUTO_INCREMENT,
+  `action` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
   `log_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `status` int DEFAULT '0',
+  `status` int(11) DEFAULT '0',
   PRIMARY KEY (`log_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -303,13 +303,13 @@ INSERT INTO `users_log` VALUES (1,'INSERT',23,'2026-09-29 09:15:58',1),(2,'INSER
 UNLOCK TABLES;
 
 --
--- Temporary view structure for view `v_only_students`
+-- Temporary table structure for view `v_only_students`
 --
 
 DROP TABLE IF EXISTS `v_only_students`;
 /*!50001 DROP VIEW IF EXISTS `v_only_students`*/;
 SET @saved_cs_client     = @@character_set_client;
-/*!50503 SET character_set_client = utf8mb4 */;
+SET character_set_client = utf8;
 /*!50001 CREATE VIEW `v_only_students` AS SELECT 
  1 AS `id`,
  1 AS `login`,
@@ -317,88 +317,18 @@ SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = @saved_cs_client;
 
 --
--- Temporary view structure for view `v_users_history`
+-- Temporary table structure for view `v_users_history`
 --
 
 DROP TABLE IF EXISTS `v_users_history`;
 /*!50001 DROP VIEW IF EXISTS `v_users_history`*/;
 SET @saved_cs_client     = @@character_set_client;
-/*!50503 SET character_set_client = utf8mb4 */;
+SET character_set_client = utf8;
 /*!50001 CREATE VIEW `v_users_history` AS SELECT 
  1 AS `login`,
  1 AS `action`,
  1 AS `log_time`*/;
 SET character_set_client = @saved_cs_client;
-
---
--- Dumping routines for database 'testing_system'
---
-/*!50003 DROP FUNCTION IF EXISTS `GetGrade` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` FUNCTION `GetGrade`(score DECIMAL(5,2)) RETURNS varchar(20) CHARSET utf8mb4
-    DETERMINISTIC
-BEGIN
-    DECLARE result VARCHAR(20);
-    IF score >= 90 THEN 
-        SET result = 'Отлично';
-    ELSEIF score >= 75 THEN 
-        SET result = 'Хорошо';
-    ELSEIF score >= 50 THEN 
-        SET result = 'Удовл.';
-    ELSE 
-        SET result = 'Неудовл.';
-    END IF;
-    RETURN result;
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `UpdateLogStatus` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateLogStatus`()
-BEGIN
-    DECLARE done INT DEFAULT 0;
-    DECLARE current_log_id INT;
-    
-    DECLARE cur CURSOR FOR SELECT `log_id` FROM `users_log` WHERE `status` = 0;
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-    
-    OPEN cur;
-    
-    read_loop: LOOP
-        FETCH cur INTO current_log_id;
-        IF done THEN
-            LEAVE read_loop;
-        END IF;
-        
-        UPDATE `users_log` SET `status` = 1 WHERE `log_id` = current_log_id;
-    END LOOP;
-    
-    CLOSE cur;
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Final view structure for view `v_only_students`
@@ -445,4 +375,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-17 10:24:43
+-- Dump completed on 2026-11-18  9:03:44
