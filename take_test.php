@@ -11,7 +11,7 @@ $testId = isset($_GET['test_id']) ? (int)$_GET['test_id'] : 0;
 $resultMsg = '';
 $errorMsg = '';
 
-// Обработка отправки теста в ТРАНЗАКЦИИ
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_test'])) {
     $testId = (int)$_POST['test_id'];
     $answers = $_POST['answers'] ?? [];
@@ -20,18 +20,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_test'])) {
     try {
         $pdo->beginTransaction();
 
-        // 1. Создаем черновик попытки
         $stmtAttempt = $pdo->prepare("INSERT INTO attempts (student_id, test_id, score) VALUES (?, ?, 0)");
         $stmtAttempt->execute([$_SESSION['user_id'], $testId]);
         $attemptId = $pdo->lastInsertId();
 
-        // 2. Получаем все вопросы теста
         $stmtQ = $pdo->prepare("SELECT * FROM questions WHERE test_id = ?");
         $stmtQ->execute([$testId]);
         $questions = $stmtQ->fetchAll();
 
         if (count($questions) === 0) {
-            throw new Exception("В этом тесте пока нет вопросов — транзакция отменена (ROLLBACK).");
+            throw new Exception("В этом тесте пока нет вопросов.");
         }
 
         $correctCount = 0;
@@ -45,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_test'])) {
             if ($q['question_type'] === 'text_input') {
                 $txt = trim($typed[$qid] ?? '');
                 $stmtInsertAns->execute([$attemptId, $qid, null, $txt]);
-                // Проверяем совпадение с правильным вариантом
                 $stmtChk = $pdo->prepare("SELECT option_text FROM answer_options WHERE question_id = ? AND is_correct = 1 LIMIT 1");
                 $stmtChk->execute([$qid]);
                 $right = $stmtChk->fetchColumn();
@@ -60,7 +57,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_test'])) {
                     $stmtInsertAns->execute([$attemptId, $qid, (int)$optId, null]);
                 }
 
-                // Сверяем выбранные варианты с эталонными
                 $stmtRight = $pdo->prepare("SELECT id FROM answer_options WHERE question_id = ? AND is_correct = 1");
                 $stmtRight->execute([$qid]);
                 $rightIds = $stmtRight->fetchAll(PDO::FETCH_COLUMN);
@@ -74,13 +70,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_test'])) {
             }
         }
 
-        // 3. Рассчитываем процент и обновляем attempt
         $score = round(($correctCount / count($questions)) * 100, 2);
         $stmtUpd = $pdo->prepare("UPDATE attempts SET score = ? WHERE id = ?");
         $stmtUpd->execute([$score, $attemptId]);
 
         $pdo->commit();
-        $resultMsg = "Транзакция успешно зафиксирована (COMMIT)! Попытка #$attemptId сохранена. Правильных ответов: $correctCount из " . count($questions) . ". Итоговый балл: $score.";
+        $resultMsg = "Тест успешно пройден! Попытка #$attemptId сохранена. Правильных ответов: $correctCount из " . count($questions) . ". Итоговый балл: $score.";
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();

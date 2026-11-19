@@ -13,10 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
 
     $stmt = $pdo->prepare("
-        SELECT u.id, u.login, u.password_hash, u.role_id, r.name AS role_name 
-        FROM users u 
-        JOIN roles r ON u.role_id = r.id 
-        WHERE u.login = ?
+    SELECT u.id, u.login, u.full_name, u.password_hash, u.role_id, r.name AS role_name 
+    FROM users u 
+    JOIN roles r ON u.role_id = r.id 
+    WHERE u.login = ?
     ");
     $stmt->execute([$login]);
     $user = $stmt->fetch();
@@ -24,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($user && password_verify($password, $user['password_hash'])) {
         $_SESSION['user_id']   = $user['id'];
         $_SESSION['login']     = $user['login'];
+        $_SESSION['full_name'] = $user['full_name'];
         $_SESSION['role_id']   = $user['role_id'];
         $_SESSION['role_name'] = $user['role_name'];
         header('Location: index.php');
@@ -55,13 +56,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <form method="POST">
                         <div class="mb-3">
                             <label class="form-label">Логин</label>
-                            <input type="text" name="login" class="form-control" required placeholder="ivanov_teacher">
+                            <input type="text" name="login" class="form-control" required placeholder="Логин">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Пароль</label>
-                            <input type="password" name="password" class="form-control" required placeholder="12345">
+                            <input type="password" name="password" class="form-control" required placeholder="Пароль">
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Войти</button>
+                        <a href="register.php" class="d-block text-end mt-3 text-primary text-decoration-underline small">Нет аккаунта? Регистрация.</a>
                     </form>
                 </div>
                 <div class="card-footer text-muted small">
