@@ -4,7 +4,17 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
-$isTeacher = ($_SESSION['role_name'] === 'teacher');
+
+$role      = $_SESSION['role_name'] ?? 'student';
+$isAdmin   = ($role === 'admin');
+$canManage = in_array($role, ['admin', 'teacher'], true);
+
+$badgeClass = 'bg-info';
+if ($role === 'admin') {
+    $badgeClass = 'bg-danger';
+} elseif ($role === 'teacher') {
+    $badgeClass = 'bg-warning text-dark';
+}
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -19,9 +29,9 @@ $isTeacher = ($_SESSION['role_name'] === 'teacher');
         <a class="navbar-brand" href="index.php">TestingSystem</a>
         <div class="d-flex align-items-center text-white">
             <span class="me-3">
-                <strong><?= htmlspecialchars($_SESSION['login']) ?></strong> 
-                <span class="badge bg-<?= $isTeacher ? 'warning text-dark' : 'info' ?>">
-                    <?= htmlspecialchars($_SESSION['role_name']) ?>
+                <strong><?= htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['login']) ?></strong> 
+                <span class="badge <?= $badgeClass ?>">
+                    <?= htmlspecialchars($role) ?>
                 </span>
             </span>
             <a href="logout.php" class="btn btn-outline-light btn-sm">Выйти</a>
@@ -31,12 +41,16 @@ $isTeacher = ($_SESSION['role_name'] === 'teacher');
 
 <div class="container">
     <div class="row g-4">
-        <?php if ($isTeacher): ?>
+        <?php if ($canManage): ?>
             <div class="col-md-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title">1. Управление данными (CRUD)</h5>
-                        <p class="card-text">Пользователи (срабатывание триггеров), тесты, вопросы, варианты ответов и попытки.</p>
+                        <p class="card-text">
+                            <?= $isAdmin 
+                                ? 'Полный доступ: управление пользователями, тестами, вопросами и попытками.' 
+                                : 'Создание и редактирование ваших тестов, вопросов и вариантов ответов.' ?>
+                        </p>
                         <a href="crud.php" class="btn btn-primary">Открыть справочники</a>
                     </div>
                 </div>
