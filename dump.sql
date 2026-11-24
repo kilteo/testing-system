@@ -79,6 +79,7 @@ CREATE TABLE `attempts` (
   `student_id` int(11) NOT NULL,
   `test_id` int(11) NOT NULL,
   `score` decimal(5,2) DEFAULT NULL,
+  `completed_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `student_id` (`student_id`),
   KEY `test_id` (`test_id`),
@@ -93,8 +94,54 @@ CREATE TABLE `attempts` (
 
 LOCK TABLES `attempts` WRITE;
 /*!40000 ALTER TABLE `attempts` DISABLE KEYS */;
-INSERT INTO `attempts` VALUES (1,2,1,NULL),(2,2,1,123.00),(3,2,1,100.00);
+INSERT INTO `attempts` VALUES (1,2,1,NULL,'2026-11-24 15:29:52'),(2,2,1,123.00,'2026-11-24 15:29:52'),(3,2,1,100.00,'2026-11-24 15:29:52');
 /*!40000 ALTER TABLE `attempts` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`%`*/ /*!50003 TRIGGER trg_after_insert_attempt
+AFTER INSERT ON attempts
+FOR EACH ROW
+INSERT INTO attempts_log (attempt_id, student_id, test_id, score)
+VALUES (NEW.id, NEW.student_id, NEW.test_id, NEW.score) */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Table structure for table `attempts_log`
+--
+
+DROP TABLE IF EXISTS `attempts_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `attempts_log` (
+  `log_id` int(11) NOT NULL AUTO_INCREMENT,
+  `attempt_id` int(11) DEFAULT NULL,
+  `student_id` int(11) DEFAULT NULL,
+  `test_id` int(11) DEFAULT NULL,
+  `score` decimal(5,2) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `attempts_log`
+--
+
+LOCK TABLES `attempts_log` WRITE;
+/*!40000 ALTER TABLE `attempts_log` DISABLE KEYS */;
+/*!40000 ALTER TABLE `attempts_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -376,4 +423,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-24 15:25:36
+-- Dump completed on 2026-11-24 16:00:40

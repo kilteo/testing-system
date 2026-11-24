@@ -15,7 +15,7 @@ $canManage = ($isAdmin || $isTeacher);
 
 $selectedTestId = isset($_GET['test_id']) && $_GET['test_id'] !== '' ? (int)$_GET['test_id'] : null;
 
-// Вспомогательная функция перевода баллов в оценку (дублирует логику GetGrade на случай отсутствия в БД)
+
 function formatGrade(float $score): array {
     if ($score >= 85) return ['Отлично (5)', 'bg-success'];
     if ($score >= 70) return ['Хорошо (4)', 'bg-primary'];
@@ -23,7 +23,7 @@ function formatGrade(float $score): array {
     return ['Неудовлетворительно (2)', 'bg-danger'];
 }
 
-// 1. Список доступных тестов для фильтра (для админа и преподавателя)
+
 $availableTests = [];
 if ($canManage) {
     if ($isAdmin) {
@@ -35,7 +35,7 @@ if ($canManage) {
     }
 }
 
-// 2. Формирование выборки попыток в зависимости от роли
+
 $params = [];
 $where  = [];
 
@@ -43,7 +43,7 @@ if ($isTeacher) {
     $where[]  = "t.teacher_id = ?";
     $params[] = $userId;
 } elseif (!$isAdmin) {
-    // Студент видит только свои попытки
+
     $where[]  = "a.student_id = ?";
     $params[] = $userId;
 }
@@ -76,13 +76,12 @@ $stmtAttempts = $pdo->prepare($sqlAttempts);
 $stmtAttempts->execute($params);
 $attempts = $stmtAttempts->fetchAll();
 
-// 3. Экспорт в CSV (с UTF-8 BOM для корректного открытия в Excel)
+
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="testing_report_' . date('Y-m-d_His') . '.csv"');
 
     $out = fopen('php://output', 'w');
-    // UTF-8 BOM
     fwrite($out, "\xEF\xBB\xBF");
 
     fputcsv($out, ['ID попытки', 'Студент', 'Логин', 'Тест', 'Преподаватель', 'Балл (%)', 'Оценка', 'Дата прохождения'], ';');
@@ -104,7 +103,6 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     exit;
 }
 
-// 4. Сводная статистика по тестам (для админа и преподавателя)
 $stats = [];
 if ($canManage) {
     $statsWhere = $isTeacher ? "WHERE t.teacher_id = ?" : "";
@@ -134,9 +132,19 @@ if ($canManage) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         @media print {
+            @page { size: landscape; margin: 10mm; }
             .no-print { display: none !important; }
-            body { background: #fff !important; }
+            body { background: #fff !important; font-size: 12px; }
+            .container { max-width: 100% !important; width: 100% !important; padding: 0 !important; }
             .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+            table { width: 100% !important; font-size: 12px; }
+            th, td { padding: 4px 6px !important; }
+            .badge {
+                color: #000 !important;
+                background: transparent !important;
+                border: 1px solid #666 !important;
+                font-weight: 600;
+            }
         }
     </style>
 </head>

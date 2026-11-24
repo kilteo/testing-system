@@ -42,7 +42,7 @@ if ($role === 'admin') {
 <div class="container">
     <div class="row g-4">
         <?php if ($canManage): ?>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title">1. Управление данными (CRUD)</h5>
@@ -55,12 +55,21 @@ if ($role === 'admin') {
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">2. Результаты и ведомость</h5>
-                        <p class="card-text">Просмотр результатов тестирования, статистика по тестам и выгрузка ведомости в CSV.</p>
-                        <a href="reports.php" class="btn btn-success">Открыть отчеты</a>
+                        <h5 class="card-title">2. Аналитика и SQL-запросы</h5>
+                        <p class="card-text">Статические и динамические запросы, VIEW, журнал триггеров, вызов GetGrade и UpdateLogStatus.</p>
+                        <a href="queries.php" class="btn btn-success">Открыть запросы</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">3. Результаты и ведомость</h5>
+                        <p class="card-text">Просмотр результатов тестирования, статистика по тестам, печать и выгрузка в CSV.</p>
+                        <a href="reports.php" class="btn btn-secondary">Открыть отчеты</a>
                     </div>
                 </div>
             </div>
@@ -69,7 +78,7 @@ if ($role === 'admin') {
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title">Пройти тестирование</h5>
-                        <p class="card-text">Выбор доступного теста и транзакционная отправка ответов с расчетом баллов.</p>
+                        <p class="card-text">Выбор доступного теста, динамическое перемешивание и автопроверка.</p>
                         <a href="take_test.php" class="btn btn-primary">К списку тестов</a>
                     </div>
                 </div>
