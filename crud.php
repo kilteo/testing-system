@@ -9,10 +9,9 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role_name'], ['admin', 
 $isAdmin     = ($_SESSION['role_name'] === 'admin');
 $currentUser = (int)$_SESSION['user_id'];
 
-// Учителю доступны только вкладки tests, questions, options
 $allowedTabs = $isAdmin
     ? ['users', 'tests', 'questions', 'options', 'attempts']
-    : ['tests', 'questions', 'options'];
+    : ['tests', 'questions', 'options', 'attempts'];
 
 $tab = $_GET['tab'] ?? ($isAdmin ? 'users' : 'tests');
 if (!in_array($tab, $allowedTabs, true)) {
@@ -22,13 +21,11 @@ if (!in_array($tab, $allowedTabs, true)) {
 $msg = '';
 $err = '';
 
-
 function checkTestOwnership(PDO $pdo, int $testId, int $teacherId): bool {
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM tests WHERE id = ? AND teacher_id = ?");
     $stmt->execute([$testId, $teacherId]);
     return (int)$stmt->fetchColumn() > 0;
 }
-
 
 function checkQuestionOwnership(PDO $pdo, int $questionId, int $teacherId): bool {
     $stmt = $pdo->prepare("
@@ -40,13 +37,22 @@ function checkQuestionOwnership(PDO $pdo, int $questionId, int $teacherId): bool
     return (int)$stmt->fetchColumn() > 0;
 }
 
+function checkAttemptOwnership(PDO $pdo, int $attemptId, int $teacherId): bool {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) FROM attempts a
+        JOIN tests t ON a.test_id = t.id
+        WHERE a.id = ? AND t.teacher_id = ?
+    ");
+    $stmt->execute([$attemptId, $teacherId]);
+    return (int)$stmt->fetchColumn() > 0;
+}
+
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = $_POST['action'] ?? '';
 
 
         if ($tab === 'users' && $isAdmin) {
-
             $adminRoleId = (int)$pdo->query("SELECT id FROM roles WHERE name = 'admin' LIMIT 1")->fetchColumn();
 
             if ($action === 'create') {
@@ -61,7 +67,6 @@ try {
                 if ((int)$_POST['role_id'] === $adminRoleId) {
                     throw new Exception("Нельзя назначить роль администратора.");
                 }
-
                 $stmt = $pdo->prepare("UPDATE users SET login = ?, full_name = ?, role_id = ? WHERE id = ? AND role_id != ?");
                 $stmt->execute([trim($_POST['login']), trim($_POST['full_name']), $_POST['role_id'], $_POST['id'], $adminRoleId]);
                 $msg = "Данные пользователя обновлены.";
@@ -189,18 +194,26 @@ try {
         }
 
 
-        if ($tab === 'attempts' && $isAdmin) {
-            if ($action === 'create') {
+        if ($tab === 'attempts') {
+            if ($action === 'create' && $isAdmin) {
                 $stmt = $pdo->prepare("INSERT INTO attempts (student_id, test_id, score) VALUES (?, ?, ?)");
                 $stmt->execute([$_POST['student_id'], $_POST['test_id'], $_POST['score']]);
                 $msg = "Попытка добавлена.";
             } elseif ($action === 'update') {
+                $attemptId = (int)$_POST['id'];
+                if (!$isAdmin && !checkAttemptOwnership($pdo, $attemptId, $currentUser)) {
+                    throw new Exception("Доступ запрещен: эта попытка относится к чужому тесту.");
+                }
                 $stmt = $pdo->prepare("UPDATE attempts SET score = ? WHERE id = ?");
-                $stmt->execute([$_POST['score'], $_POST['id']]);
+                $stmt->execute([$_POST['score'], $attemptId]);
                 $msg = "Балл попытки обновлен.";
             } elseif ($action === 'delete') {
+                $attemptId = (int)$_POST['id'];
+                if (!$isAdmin && !checkAttemptOwnership($pdo, $attemptId, $currentUser)) {
+                    throw new Exception("Доступ запрещен: нельзя удалить попытку по чужому тесту.");
+                }
                 $stmt = $pdo->prepare("DELETE FROM attempts WHERE id = ?");
-                $stmt->execute([$_POST['id']]);
+                $stmt->execute([$attemptId]);
                 $msg = "Попытка удалена.";
             }
         }
@@ -210,7 +223,7 @@ try {
 }
 
 
-$roles = $pdo->query("SELECT * FROM roles WHERE name != 'admin'")->fetchAll();
+$roles    = $pdo->query("SELECT * FROM roles WHERE name != 'admin'")->fetchAll();
 $teachers = $pdo->query("SELECT u.* FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name = 'teacher'")->fetchAll();
 $students = $pdo->query("SELECT u.* FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name = 'student'")->fetchAll();
 
@@ -255,9 +268,7 @@ if ($isAdmin) {
         <li class="nav-item"><a class="nav-link <?= $tab==='tests'?'active':'' ?>" href="?tab=tests">Тесты (tests)</a></li>
         <li class="nav-item"><a class="nav-link <?= $tab==='questions'?'active':'' ?>" href="?tab=questions">Вопросы (questions)</a></li>
         <li class="nav-item"><a class="nav-link <?= $tab==='options'?'active':'' ?>" href="?tab=options">Варианты ответов</a></li>
-        <?php if ($isAdmin): ?>
-            <li class="nav-item"><a class="nav-link <?= $tab==='attempts'?'active':'' ?>" href="?tab=attempts">Попытки (attempts)</a></li>
-        <?php endif; ?>
+        <li class="nav-item"><a class="nav-link <?= $tab==='attempts'?'active':'' ?>" href="?tab=attempts">Попытки (attempts)</a></li>
     </ul>
 
     <?php if ($tab === 'users' && $isAdmin): ?>
@@ -273,8 +284,8 @@ if ($isAdmin) {
             </div>
             <div class="col-md-2"><button class="btn btn-primary w-100">Добавить</button></div>
         </form>
-        <table class="table table-bordered bg-white">
-            <tr><th>ID</th><th>ФИО</th><th>Логин</th><th>Роль</th><th>Действия</th></tr>
+        <table class="table table-bordered bg-white align-middle">
+            <tr><th style="width: 60px;">ID</th><th>ФИО</th><th>Логин</th><th style="width: 150px;">Роль</th><th style="width: 170px;">Действия</th></tr>
             <?php
             $rows = $pdo->query("
                 SELECT u.*, r.name AS role_name 
@@ -284,24 +295,24 @@ if ($isAdmin) {
                 ORDER BY u.id
             ")->fetchAll();
             foreach ($rows as $row): ?>
-            <tr>
-                <form method="POST">
-                    <td><?= $row['id'] ?><input type="hidden" name="id" value="<?= $row['id'] ?>"></td>
-                    <td><input type="text" name="full_name" value="<?= htmlspecialchars($row['full_name']) ?>" class="form-control form-control-sm"></td>
-                    <td><input type="text" name="login" value="<?= htmlspecialchars($row['login']) ?>" class="form-control form-control-sm"></td>
-                    <td>
-                        <select name="role_id" class="form-select form-select-sm">
-                            <?php foreach ($roles as $r): ?>
-                                <option value="<?= $r['id'] ?>" <?= $r['id']==$row['role_id']?'selected':'' ?>><?= htmlspecialchars($r['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                    <td class="d-flex gap-1">
-                        <button name="action" value="update" class="btn btn-sm btn-warning">Сохранить</button>
-                        <button name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Удалить?')">Удалить</button>
-                    </td>
-                </form>
-            </tr>
+                <tr>
+                    <form method="POST">
+                        <td><?= $row['id'] ?><input type="hidden" name="id" value="<?= $row['id'] ?>"></td>
+                        <td><input type="text" name="full_name" value="<?= htmlspecialchars($row['full_name']) ?>" class="form-control form-control-sm"></td>
+                        <td><input type="text" name="login" value="<?= htmlspecialchars($row['login']) ?>" class="form-control form-control-sm"></td>
+                        <td>
+                            <select name="role_id" class="form-select form-select-sm">
+                                <?php foreach ($roles as $r): ?>
+                                    <option value="<?= $r['id'] ?>" <?= $r['id']==$row['role_id']?'selected':'' ?>><?= htmlspecialchars($r['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                        <td class="d-flex gap-1">
+                            <button name="action" value="update" class="btn btn-sm btn-warning">Сохранить</button>
+                            <button name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Удалить?')">Удалить</button>
+                        </td>
+                    </form>
+                </tr>
             <?php endforeach; ?>
         </table>
 
@@ -322,8 +333,8 @@ if ($isAdmin) {
             <?php endif; ?>
             <div class="col-md-2"><button class="btn btn-primary w-100">Создать тест</button></div>
         </form>
-        <table class="table table-bordered bg-white">
-            <tr><th>ID</th><th>Название теста</th><?php if ($isAdmin): ?><th>Автор (преподаватель)</th><?php endif; ?><th>Действия</th></tr>
+        <table class="table table-bordered bg-white align-middle">
+            <tr><th style="width: 60px;">ID</th><th>Название теста</th><?php if ($isAdmin): ?><th style="width: 240px;">Автор (преподаватель)</th><?php endif; ?><th style="width: 170px;">Действия</th></tr>
             <?php
             if ($isAdmin) {
                 $rows = $pdo->query("SELECT t.*, u.login, u.full_name FROM tests t JOIN users u ON t.teacher_id = u.id ORDER BY t.id")->fetchAll();
@@ -333,27 +344,27 @@ if ($isAdmin) {
                 $rows = $stmt->fetchAll();
             }
             foreach ($rows as $row): ?>
-            <tr>
-                <form method="POST">
-                    <td><?= $row['id'] ?><input type="hidden" name="id" value="<?= $row['id'] ?>"></td>
-                    <td><input type="text" name="title" value="<?= htmlspecialchars($row['title']) ?>" class="form-control form-control-sm"></td>
-                    <?php if ($isAdmin): ?>
-                        <td>
-                            <select name="teacher_id" class="form-select form-select-sm">
-                                <?php foreach ($teachers as $t): ?>
-                                    <option value="<?= $t['id'] ?>" <?= $t['id']==$row['teacher_id']?'selected':'' ?>>
-                                        <?= htmlspecialchars($t['full_name'] ?: $t['login']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                <tr>
+                    <form method="POST">
+                        <td><?= $row['id'] ?><input type="hidden" name="id" value="<?= $row['id'] ?>"></td>
+                        <td><input type="text" name="title" value="<?= htmlspecialchars($row['title']) ?>" class="form-control form-control-sm"></td>
+                        <?php if ($isAdmin): ?>
+                            <td>
+                                <select name="teacher_id" class="form-select form-select-sm">
+                                    <?php foreach ($teachers as $t): ?>
+                                        <option value="<?= $t['id'] ?>" <?= $t['id']==$row['teacher_id']?'selected':'' ?>>
+                                            <?= htmlspecialchars($t['full_name'] ?: $t['login']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </td>
+                        <?php endif; ?>
+                        <td class="d-flex gap-1">
+                            <button name="action" value="update" class="btn btn-sm btn-warning">Сохранить</button>
+                            <button name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Удалить тест?')">Удалить</button>
                         </td>
-                    <?php endif; ?>
-                    <td class="d-flex gap-1">
-                        <button name="action" value="update" class="btn btn-sm btn-warning">Сохранить</button>
-                        <button name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Удалить тест?')">Удалить</button>
-                    </td>
-                </form>
-            </tr>
+                    </form>
+                </tr>
             <?php endforeach; ?>
         </table>
 
@@ -375,58 +386,68 @@ if ($isAdmin) {
             </div>
             <div class="col-md-2"><button class="btn btn-primary w-100">Добавить</button></div>
         </form>
-        <table class="table table-bordered bg-white">
-            <tr><th>ID</th><th>Тест</th><th>Вопрос</th><th>Тип</th><th>Действия</th></tr>
+        <table class="table table-bordered bg-white align-middle">
+            <tr><th style="width: 60px;">ID</th><th style="width: 240px;">Тест</th><th>Вопрос</th><th style="width: 160px;">Тип</th><th style="width: 170px;">Действия</th></tr>
             <?php foreach ($questList as $row): ?>
-            <tr>
-                <form method="POST">
-                    <td><?= $row['id'] ?><input type="hidden" name="id" value="<?= $row['id'] ?>"></td>
-                    <td>
-                        <select name="test_id" class="form-select form-select-sm">
-                            <?php foreach ($testsList as $t): ?>
-                                <option value="<?= $t['id'] ?>" <?= $t['id']==$row['test_id']?'selected':'' ?>><?= htmlspecialchars($t['title']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                    <td><input type="text" name="question_text" value="<?= htmlspecialchars($row['question_text']) ?>" class="form-control form-control-sm"></td>
-                    <td>
-                        <select name="question_type" class="form-select form-select-sm">
-                            <?php foreach (['single_choice','multiple_choice','text_input'] as $qt): ?>
-                                <option value="<?= $qt ?>" <?= $qt===$row['question_type']?'selected':'' ?>><?= $qt ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                    <td class="d-flex gap-1">
-                        <button name="action" value="update" class="btn btn-sm btn-warning">Сохранить</button>
-                        <button name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Удалить?')">Удалить</button>
-                    </td>
-                </form>
-            </tr>
+                <tr>
+                    <form method="POST">
+                        <td><?= $row['id'] ?><input type="hidden" name="id" value="<?= $row['id'] ?>"></td>
+                        <td>
+                            <select name="test_id" class="form-select form-select-sm">
+                                <?php foreach ($testsList as $t): ?>
+                                    <option value="<?= $t['id'] ?>" <?= $t['id']==$row['test_id']?'selected':'' ?>><?= htmlspecialchars($t['title']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                        <td><input type="text" name="question_text" value="<?= htmlspecialchars($row['question_text']) ?>" class="form-control form-control-sm"></td>
+                        <td>
+                            <select name="question_type" class="form-select form-select-sm">
+                                <?php foreach (['single_choice','multiple_choice','text_input'] as $qt): ?>
+                                    <option value="<?= $qt ?>" <?= $qt===$row['question_type']?'selected':'' ?>><?= $qt ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                        <td class="d-flex gap-1">
+                            <button name="action" value="update" class="btn btn-sm btn-warning">Сохранить</button>
+                            <button name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Удалить?')">Удалить</button>
+                        </td>
+                    </form>
+                </tr>
             <?php endforeach; ?>
         </table>
 
     <?php elseif ($tab === 'options'): ?>
         <form method="POST" class="row g-2 mb-4 bg-white p-3 rounded shadow-sm">
             <input type="hidden" name="action" value="create">
-            <div class="col-md-4">
+            <div class="col-md-5">
                 <select name="question_id" class="form-select" required>
-                    <?php foreach ($questList as $q): ?><option value="<?= $q['id'] ?>">#<?= $q['id'] ?> <?= htmlspecialchars(mb_substr($q['question_text'],0,40)) ?></option><?php endforeach; ?>
+                    <?php foreach ($questList as $q): ?>
+                        <option value="<?= $q['id'] ?>" title="<?= htmlspecialchars($q['question_text']) ?>">
+                            <?= htmlspecialchars($q['question_text']) ?>
+                        </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div class="col-md-4"><input type="text" name="option_text" class="form-control" placeholder="Текст ответа" required></div>
-            <div class="col-md-2 d-flex align-items-center">
+            <div class="col-md-1 d-flex align-items-center">
                 <div class="form-check"><input type="checkbox" name="is_correct" class="form-check-input" id="ic"><label class="form-check-label" for="ic">Верный</label></div>
             </div>
             <div class="col-md-2"><button class="btn btn-primary w-100">Добавить</button></div>
         </form>
-        <table class="table table-bordered bg-white">
-            <tr><th>ID</th><th>Вопрос</th><th>Вариант</th><th>Верный?</th><th>Действия</th></tr>
+        <table class="table table-bordered bg-white align-middle">
+            <tr>
+                <th style="width: 60px;">ID</th>
+                <th style="width: 45%;">Вопрос</th>
+                <th>Вариант</th>
+                <th style="width: 90px;">Верный?</th>
+                <th style="width: 170px;">Действия</th>
+            </tr>
             <?php
             if ($isAdmin) {
-                $rows = $pdo->query("SELECT * FROM answer_options ORDER BY question_id, id")->fetchAll();
+                $rows = $pdo->query("SELECT ao.*, q.question_text FROM answer_options ao JOIN questions q ON ao.question_id = q.id ORDER BY ao.question_id, ao.id")->fetchAll();
             } else {
                 $stmtO = $pdo->prepare("
-                    SELECT ao.* FROM answer_options ao
+                    SELECT ao.*, q.question_text FROM answer_options ao
                     JOIN questions q ON ao.question_id = q.id
                     JOIN tests t ON q.test_id = t.id
                     WHERE t.teacher_id = ?
@@ -436,60 +457,84 @@ if ($isAdmin) {
                 $rows = $stmtO->fetchAll();
             }
             foreach ($rows as $row): ?>
-            <tr>
-                <form method="POST">
-                    <td><?= $row['id'] ?><input type="hidden" name="id" value="<?= $row['id'] ?>"></td>
-                    <td>
-                        <select name="question_id" class="form-select form-select-sm">
-                            <?php foreach ($questList as $q): ?>
-                                <option value="<?= $q['id'] ?>" <?= $q['id']==$row['question_id']?'selected':'' ?>>#<?= $q['id'] ?> <?= htmlspecialchars(mb_substr($q['question_text'],0,30)) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                    <td><input type="text" name="option_text" value="<?= htmlspecialchars($row['option_text']) ?>" class="form-control form-control-sm"></td>
-                    <td class="text-center"><input type="checkbox" name="is_correct" <?= $row['is_correct']?'checked':'' ?>></td>
-                    <td class="d-flex gap-1">
-                        <button name="action" value="update" class="btn btn-sm btn-warning">Сохранить</button>
-                        <button name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Удалить?')">Удалить</button>
-                    </td>
-                </form>
-            </tr>
+                <tr>
+                    <form method="POST">
+                        <td><?= $row['id'] ?><input type="hidden" name="id" value="<?= $row['id'] ?>"></td>
+                        <td>
+                            <select name="question_id" class="form-select form-select-sm" title="<?= htmlspecialchars($row['question_text']) ?>">
+                                <?php foreach ($questList as $q): ?>
+                                    <option value="<?= $q['id'] ?>" <?= $q['id']==$row['question_id']?'selected':'' ?>>
+                                        <?= htmlspecialchars($q['question_text']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                        <td><input type="text" name="option_text" value="<?= htmlspecialchars($row['option_text']) ?>" class="form-control form-control-sm"></td>
+                        <td class="text-center"><input type="checkbox" name="is_correct" <?= $row['is_correct']?'checked':'' ?>></td>
+                        <td class="d-flex gap-1">
+                            <button name="action" value="update" class="btn btn-sm btn-warning">Сохранить</button>
+                            <button name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Удалить?')">Удалить</button>
+                        </td>
+                    </form>
+                </tr>
             <?php endforeach; ?>
         </table>
 
-    <?php elseif ($tab === 'attempts' && $isAdmin): ?>
-        <form method="POST" class="row g-2 mb-4 bg-white p-3 rounded shadow-sm">
-            <input type="hidden" name="action" value="create">
-            <div class="col-md-4">
-                <select name="student_id" class="form-select">
-                    <?php foreach ($students as $s): ?><option value="<?= $s['id'] ?>"><?= htmlspecialchars($s['full_name'] ?: $s['login']) ?></option><?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <select name="test_id" class="form-select">
-                    <?php foreach ($testsList as $t): ?><option value="<?= $t['id'] ?>"><?= htmlspecialchars($t['title']) ?></option><?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-2"><input type="number" step="0.01" name="score" class="form-control" placeholder="Балл (0-100)" required></div>
-            <div class="col-md-2"><button class="btn btn-primary w-100">Добавить</button></div>
-        </form>
-        <table class="table table-bordered bg-white">
-            <tr><th>ID</th><th>Студент</th><th>Тест</th><th>Балл</th><th>Действия</th></tr>
+    <?php elseif ($tab === 'attempts'): ?>
+        <?php if ($isAdmin): ?>
+            <form method="POST" class="row g-2 mb-4 bg-white p-3 rounded shadow-sm">
+                <input type="hidden" name="action" value="create">
+                <div class="col-md-4">
+                    <select name="student_id" class="form-select">
+                        <?php foreach ($students as $s): ?><option value="<?= $s['id'] ?>"><?= htmlspecialchars($s['full_name'] ?: $s['login']) ?></option><?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select name="test_id" class="form-select">
+                        <?php foreach ($testsList as $t): ?><option value="<?= $t['id'] ?>"><?= htmlspecialchars($t['title']) ?></option><?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-2"><input type="number" step="0.01" name="score" class="form-control" placeholder="Балл (0-100)" required></div>
+                <div class="col-md-2"><button class="btn btn-primary w-100">Добавить</button></div>
+            </form>
+        <?php endif; ?>
+
+        <table class="table table-bordered bg-white align-middle">
+            <tr><th style="width: 60px;">ID</th><th>Студент</th><th>Тест</th><th style="width: 120px;">Балл</th><th style="width: 170px;">Действия</th></tr>
             <?php
-            $rows = $pdo->query("SELECT a.*, u.login, u.full_name, t.title FROM attempts a JOIN users u ON a.student_id=u.id JOIN tests t ON a.test_id=t.id ORDER BY a.id DESC")->fetchAll();
+            if ($isAdmin) {
+                $rows = $pdo->query("
+                    SELECT a.*, u.login, u.full_name, t.title 
+                    FROM attempts a 
+                    JOIN users u ON a.student_id = u.id 
+                    JOIN tests t ON a.test_id = t.id 
+                    ORDER BY a.id DESC
+                ")->fetchAll();
+            } else {
+                $stmtA = $pdo->prepare("
+                    SELECT a.*, u.login, u.full_name, t.title 
+                    FROM attempts a 
+                    JOIN users u ON a.student_id = u.id 
+                    JOIN tests t ON a.test_id = t.id 
+                    WHERE t.teacher_id = ?
+                    ORDER BY a.id DESC
+                ");
+                $stmtA->execute([$currentUser]);
+                $rows = $stmtA->fetchAll();
+            }
             foreach ($rows as $row): ?>
-            <tr>
-                <form method="POST">
-                    <td><?= $row['id'] ?><input type="hidden" name="id" value="<?= $row['id'] ?>"></td>
-                    <td><?= htmlspecialchars($row['full_name'] ?: $row['login']) ?></td>
-                    <td><?= htmlspecialchars($row['title']) ?></td>
-                    <td><input type="number" step="0.01" name="score" value="<?= $row['score'] ?>" class="form-control form-control-sm"></td>
-                    <td class="d-flex gap-1">
-                        <button name="action" value="update" class="btn btn-sm btn-warning">Сохранить</button>
-                        <button name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Удалить?')">Удалить</button>
-                    </td>
-                </form>
-            </tr>
+                <tr>
+                    <form method="POST">
+                        <td><?= $row['id'] ?><input type="hidden" name="id" value="<?= $row['id'] ?>"></td>
+                        <td><?= htmlspecialchars($row['full_name'] ?: $row['login']) ?></td>
+                        <td><?= htmlspecialchars($row['title']) ?></td>
+                        <td><input type="number" step="0.01" name="score" value="<?= $row['score'] ?>" class="form-control form-control-sm"></td>
+                        <td class="d-flex gap-1">
+                            <button name="action" value="update" class="btn btn-sm btn-warning">Сохранить</button>
+                            <button name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Удалить попытку?')">Удалить</button>
+                        </td>
+                    </form>
+                </tr>
             <?php endforeach; ?>
         </table>
     <?php endif; ?>

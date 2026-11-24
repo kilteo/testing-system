@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_test'])) {
     }
 }
 
-$tests = $pdo->query("SELECT t.*, u.login AS teacher FROM tests t JOIN users u ON t.teacher_id = u.id")->fetchAll();
+$tests = $pdo->query("SELECT t.*, COALESCE(NULLIF(u.full_name, ''), u.login) AS teacher FROM tests t JOIN users u ON t.teacher_id = u.id")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -127,6 +127,7 @@ $tests = $pdo->query("SELECT t.*, u.login AS teacher FROM tests t JOIN users u O
         $stmtQ = $pdo->prepare("SELECT * FROM questions WHERE test_id = ?");
         $stmtQ->execute([$testId]);
         $questions = $stmtQ->fetchAll();
+	shuffle($questions);
         ?>
         <h4 class="mb-3">Тест: <?= htmlspecialchars($currentTest['title'] ?? 'Не найден') ?></h4>
         <form method="POST">
@@ -139,6 +140,7 @@ $tests = $pdo->query("SELECT t.*, u.login AS teacher FROM tests t JOIN users u O
                         $stmtOpt = $pdo->prepare("SELECT * FROM answer_options WHERE question_id = ?");
                         $stmtOpt->execute([$q['id']]);
                         $opts = $stmtOpt->fetchAll();
+			shuffle($opts);
                         ?>
                         <?php if ($q['question_type'] === 'single_choice'): ?>
                             <?php foreach ($opts as $o): ?>

@@ -54,7 +54,7 @@ CREATE TABLE `answer_options` (
   PRIMARY KEY (`id`),
   KEY `question_id` (`question_id`),
   CONSTRAINT `answer_options_ibfk_1` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -63,7 +63,7 @@ CREATE TABLE `answer_options` (
 
 LOCK TABLES `answer_options` WRITE;
 /*!40000 ALTER TABLE `answer_options` DISABLE KEYS */;
-INSERT INTO `answer_options` VALUES (1,1,'HTTP',1),(2,2,'32 бита',1),(3,2,'64 бита',0);
+INSERT INTO `answer_options` VALUES (1,1,'HTTP',1),(2,2,'32 бита',1),(3,2,'64 бита',0),(4,3,'Rust',0),(5,3,'C++',1),(6,3,'Python',0);
 /*!40000 ALTER TABLE `answer_options` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -84,7 +84,7 @@ CREATE TABLE `attempts` (
   KEY `test_id` (`test_id`),
   CONSTRAINT `attempts_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `users` (`id`),
   CONSTRAINT `attempts_ibfk_2` FOREIGN KEY (`test_id`) REFERENCES `tests` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -112,7 +112,7 @@ CREATE TABLE `questions` (
   PRIMARY KEY (`id`),
   KEY `test_id` (`test_id`),
   CONSTRAINT `questions_ibfk_1` FOREIGN KEY (`test_id`) REFERENCES `tests` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -121,7 +121,7 @@ CREATE TABLE `questions` (
 
 LOCK TABLES `questions` WRITE;
 /*!40000 ALTER TABLE `questions` DISABLE KEYS */;
-INSERT INTO `questions` VALUES (1,1,'Напишите аббревиатуру протокола передачи гипертекста','text_input'),(2,1,'Какая длина IPv4 адресса?','single_choice');
+INSERT INTO `questions` VALUES (1,1,'Напишите аббревиатуру протокола передачи гипертекста','text_input'),(2,1,'Какая длина IPv4 адресса?','single_choice'),(3,2,'Какой язык стал улучшенной версией языка C','single_choice');
 /*!40000 ALTER TABLE `questions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -197,7 +197,7 @@ CREATE TABLE `tests` (
   PRIMARY KEY (`id`),
   KEY `teacher_id` (`teacher_id`),
   CONSTRAINT `tests_ibfk_1` FOREIGN KEY (`teacher_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -206,7 +206,7 @@ CREATE TABLE `tests` (
 
 LOCK TABLES `tests` WRITE;
 /*!40000 ALTER TABLE `tests` DISABLE KEYS */;
-INSERT INTO `tests` VALUES (1,'Сети',1);
+INSERT INTO `tests` VALUES (1,'Сети',1),(2,'Введение в программирование',35);
 /*!40000 ALTER TABLE `tests` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -227,7 +227,7 @@ CREATE TABLE `users` (
   UNIQUE KEY `login` (`login`),
   KEY `role_id` (`role_id`),
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -236,7 +236,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'ivanov_teacher','Иванов Иван Иванович','$2y$10$c8WWjP39Xt8cbYq/TeWKnO7VE9RFdRVUtubqHdOZKw44jCagSae3e',1),(2,'petrov_student','Петров Петр Петрович','$2y$10$c8WWjP39Xt8cbYq/TeWKnO7VE9RFdRVUtubqHdOZKw44jCagSae3e',2),(33,'admin','Главный Администратор','$2y$10$4qh6335JDUqBzMEDEmG.eef74IydjYR.xZ3pOBylMPsAUE7yEM/DS',3);
+INSERT INTO `users` VALUES (1,'ivanov_teacher','Иванов Иван Иванович','$2y$10$c8WWjP39Xt8cbYq/TeWKnO7VE9RFdRVUtubqHdOZKw44jCagSae3e',1),(2,'petrov_student','Петров Петр Петрович','$2y$10$c8WWjP39Xt8cbYq/TeWKnO7VE9RFdRVUtubqHdOZKw44jCagSae3e',2),(33,'admin','Главный Администратор','$2y$10$4qh6335JDUqBzMEDEmG.eef74IydjYR.xZ3pOBylMPsAUE7yEM/DS',3),(34,'login1','ААА ВВВ ГГГ','$2y$10$UzMdivOR7emLXYtuWcJ0DeJGOjfOZ8KWyoco/wSp3hbJNgFEQZWLC',2),(35,'teacher_2','Второй учитель','$2y$10$63UwG0.SXlbnv14JwpEIQ.ScSVIrJn5vP/SR4bLENVZ4lh0OiimH.',1);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -290,7 +290,7 @@ CREATE TABLE `users_log` (
   `log_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `status` int(11) DEFAULT '0',
   PRIMARY KEY (`log_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -299,7 +299,7 @@ CREATE TABLE `users_log` (
 
 LOCK TABLES `users_log` WRITE;
 /*!40000 ALTER TABLE `users_log` DISABLE KEYS */;
-INSERT INTO `users_log` VALUES (1,'INSERT',23,'2026-09-29 09:15:58',1),(2,'INSERT',24,'2026-09-29 09:15:58',1),(3,'INSERT',25,'2026-09-29 09:15:58',1),(4,'INSERT',26,'2026-09-29 09:15:58',1),(5,'INSERT',27,'2026-09-29 09:15:58',1),(6,'INSERT',28,'2026-09-29 09:15:58',1),(7,'INSERT',29,'2026-09-29 09:15:58',1),(8,'INSERT',30,'2026-09-29 09:15:58',1),(9,'INSERT',31,'2026-09-29 09:15:58',1),(10,'INSERT',32,'2026-09-29 09:15:58',1),(11,'DELETE',26,'2026-09-29 09:16:02',1),(12,'DELETE',27,'2026-09-29 09:16:02',1),(13,'DELETE',28,'2026-09-29 09:16:02',1),(14,'DELETE',29,'2026-09-29 09:16:02',1),(15,'DELETE',32,'2026-11-19 02:26:23',0),(16,'DELETE',31,'2026-11-19 02:26:25',0),(17,'DELETE',30,'2026-11-19 02:26:27',0),(18,'DELETE',25,'2026-11-19 02:26:28',0),(19,'DELETE',24,'2026-11-19 02:26:30',0),(20,'DELETE',23,'2026-11-19 02:26:32',0),(21,'INSERT',33,'2026-11-19 03:35:51',0);
+INSERT INTO `users_log` VALUES (1,'INSERT',23,'2026-09-29 09:15:58',1),(2,'INSERT',24,'2026-09-29 09:15:58',1),(3,'INSERT',25,'2026-09-29 09:15:58',1),(4,'INSERT',26,'2026-09-29 09:15:58',1),(5,'INSERT',27,'2026-09-29 09:15:58',1),(6,'INSERT',28,'2026-09-29 09:15:58',1),(7,'INSERT',29,'2026-09-29 09:15:58',1),(8,'INSERT',30,'2026-09-29 09:15:58',1),(9,'INSERT',31,'2026-09-29 09:15:58',1),(10,'INSERT',32,'2026-09-29 09:15:58',1),(11,'DELETE',26,'2026-09-29 09:16:02',1),(12,'DELETE',27,'2026-09-29 09:16:02',1),(13,'DELETE',28,'2026-09-29 09:16:02',1),(14,'DELETE',29,'2026-09-29 09:16:02',1),(15,'DELETE',32,'2026-11-19 02:26:23',0),(16,'DELETE',31,'2026-11-19 02:26:25',0),(17,'DELETE',30,'2026-11-19 02:26:27',0),(18,'DELETE',25,'2026-11-19 02:26:28',0),(19,'DELETE',24,'2026-11-19 02:26:30',0),(20,'DELETE',23,'2026-11-19 02:26:32',0),(21,'INSERT',33,'2026-11-19 03:35:51',0),(22,'INSERT',34,'2026-11-19 06:05:39',0),(23,'INSERT',35,'2026-11-19 06:29:15',0);
 /*!40000 ALTER TABLE `users_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -376,4 +376,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-19  3:36:03
+-- Dump completed on 2026-11-24 15:25:36

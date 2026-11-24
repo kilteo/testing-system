@@ -42,34 +42,25 @@ if ($role === 'admin') {
 <div class="container">
     <div class="row g-4">
         <?php if ($canManage): ?>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title">1. Управление данными (CRUD)</h5>
                         <p class="card-text">
                             <?= $isAdmin 
                                 ? 'Полный доступ: управление пользователями, тестами, вопросами и попытками.' 
-                                : 'Создание и редактирование ваших тестов, вопросов и вариантов ответов.' ?>
+                                : 'Создание и редактирование ваших тестов, вопросов, вариантов и просмотр попыток.' ?>
                         </p>
                         <a href="crud.php" class="btn btn-primary">Открыть справочники</a>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">2. Аналитика и SQL-запросы</h5>
-                        <p class="card-text">Сложные выборки, представления, вызов функции <code>GetGrade</code> и процедуры <code>UpdateLogStatus</code>.</p>
-                        <a href="queries.php" class="btn btn-success">Открыть запросы</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">3. Журнал триггеров и отчеты</h5>
-                        <p class="card-text">Аудит <code>users_log</code> и выгрузка сводной ведомости в CSV / на печать.</p>
-                        <a href="reports.php" class="btn btn-secondary">Открыть отчеты</a>
+                        <h5 class="card-title">2. Результаты и ведомость</h5>
+                        <p class="card-text">Просмотр результатов тестирования, статистика по тестам и выгрузка ведомости в CSV.</p>
+                        <a href="reports.php" class="btn btn-success">Открыть отчеты</a>
                     </div>
                 </div>
             </div>
